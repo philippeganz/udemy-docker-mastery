@@ -1,1 +1,42 @@
 # create your drupal and postgres config here, based off the last assignment
+version: '2'
+
+services: 
+  drupal:
+    build:
+      context: .
+      dockerfile: drupal.Dockerfile
+    image: philippeganz/custom-drupal
+    ports: 
+      - 8080:80
+    volumes:
+      - type: volume
+        source: modules
+        target: /var/www/html/modules
+      - type: volume
+        source: profiles
+        target: /var/www/html/profiles
+      - type: volume
+        source: themes
+        target: /var/www/html/themes
+      - type: volume
+        source: sites
+        target: /var/www/html/sites
+    depends_on: 
+      - postgres
+
+  postgres:
+    image: postgres
+    environment: 
+      POSTGRES_PASSWORD: random_pass
+    volumes: 
+      - type: volume
+        source: postgres
+        target: /var/lib/postgresql/data
+
+volumes:
+  modules:
+  profiles:
+  themes:
+  sites:
+  postgres:
