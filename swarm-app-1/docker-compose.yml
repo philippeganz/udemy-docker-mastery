@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  vode:
+    image: bretfisher/examplevotingapp_vote
+    ports: 
+      - 80:80
+    networks: 
+      - frontend
+    deploy:
+      replicas: 4
+      placement:
+        max_replicas_per_node: 1
+      restart_policy:
+        condition: on-failure
+    restart: always
+  
+  redis:
+    image: redis:3.2
+    networks:
+      - frontend
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    
+  worker:
+    image: bretfisher/examplevotingapp_worker:java
+    networks:
+      - frontend
+      - backend
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  db:
+    image: postgres:9.4
+    volumes: 
+      - type: volume
+        source: app-db
+        target: /var/lib/postgresql/data
+    environment: 
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks: 
+      - backend
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+  result:
+    image: bretfisher/examplevotingapp_result
+    ports: 
+      - 8080:80
+    networks: 
+      - backend
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+networks: 
+  frontend:
+  backend:
+
+volumes:
+  app-db:
