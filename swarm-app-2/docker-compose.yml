@@ -2,32 +2,58 @@
 # ./compose-assignment-2
 # If taking Swarm Mastery, this is your starting point for adding secrets :)
 # reminder, this needs to change to 3.1 version to use secrets!
-version: '2'
+version: '3.9'
 
-services:
-
+services: 
   drupal:
-    # this Dockerfile needs at least drupal:8.8.2 to work with postgres:12
-    image: custom-drupal
-    build: .
-    ports:
-      - "8080:80"
+    image: drupal
+    ports: 
+      - 8080:80
     volumes:
-      - drupal-modules:/var/www/html/modules
-      - drupal-profiles:/var/www/html/profiles       
-      - drupal-sites:/var/www/html/sites      
-      - drupal-themes:/var/www/html/themes
- 
-  postgres:
-    image: postgres:12.1
-    environment:
-      - POSTGRES_PASSWORD=mypasswd
-    volumes:
-      - drupal-data:/var/lib/postgresql/data
+      - type: volume
+        source: modules
+        target: /var/www/html/modules
+      - type: volume
+        source: profiles
+        target: /var/www/html/profiles
+      - type: volume
+        source: themes
+        target: /var/www/html/themes
+      - type: volume
+        source: sites
+        target: /var/www/html/sites
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role==manager
+    depends_on: 
+      - postgres
 
+  postgres:
+    image: postgres
+    environment: 
+      POSTGRES_PASSWORD_FILE: /run/secrets/psql-pw
+    volumes: 
+      - type: volume
+        source: postgres
+        target: /var/lib/postgresql/data
+    secrets:
+      - psql-pw
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    
 volumes:
-  drupal-data:
-  drupal-modules:
-  drupal-profiles:
-  drupal-sites:
-  drupal-themes:
+  modules:
+  profiles:
+  themes:
+  sites:
+  postgres:
+
+secrets:
+  psql-pw:
+    external: true
